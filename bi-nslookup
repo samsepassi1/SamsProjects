@@ -1,0 +1,20 @@
+import socket
+
+def ip_to_hostname(ip_address):
+    try:
+        hostname = socket.gethostbyaddr(ip_address)
+        return hostname[0]  # The first element is the hostname
+    except socket.herror:
+        return f"Hostname could not be found for IP: {ip_address}"
+
+if __name__ == "__main__":
+    # Input can be separated by spaces or commas
+    ip_addresses = input("Enter IP addresses (separated by spaces or commas): ")
+    
+    # Replace commas with spaces, then split the string by spaces
+    ip_list = ip_addresses.replace(",", " ").split()
+    
+    # Iterate through the list of IPs and look up each hostname
+    for ip in ip_list:
+        hostname = ip_to_hostname(ip)
+        print(f"The hostname for IP {ip} is: {hostname}")
