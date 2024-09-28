@@ -1,0 +1,37 @@
+--- Network Enumeration ---
+netstat -na
+- Check open ports
+
+arp -a
+- check arp table to see other machines on the network that
+communicated
+
+--- AD Environment ---
+systeminfo | findstr Domain
+- check if computer is domain-joined
+
+-- AD Users and Group Management--
+
+AD Admin accounts:
+BUILTIN\Administrator	Local admin access on a domain controller
+Domain Admins	    Administrative access to all resources in the domain
+Enterprise Admins	Available only in the forest root
+Schema Admins	  Capable of modifying domain/forest; useful for red teamers
+Server Operators	Can manage domain servers
+Account Operators	Can manage users that are not in privileged groups
+
+Get-AdUser -Filter *
+- Get all AD user accounts
+
+"CN=User1, CN=Users,DC=thmredteam, DC=com"
+- Sample DN
+
+Get-ADUser -Filter * -SearchBase "CN=Users,DC=THMREDTEAM
+- List any users that are part of "users"
+
+---PS---
+Get-MpThreat
+- provide us with threats details that have been detected using MS Defender. 
+
+Get-NetFirewallRule | findstr "Rule-Name"
+- Enumerate the firewall rules of the attached Windows machine.
