@@ -1,0 +1,75 @@
+import subprocess  # To run system commands like ifconfig
+import optparse    # To handle command-line options and arguments
+import re          # To use regular expressions for pattern matching
+
+
+# Function to change the MAC address
+def macchanger(interface, macaddr):
+    # Print what interface and new MAC address are being used
+    print("[+] Changing Mac Address of Interface %s to %s" % (interface, macaddr))
+    
+    # Bring the interface down (disable it temporarily)
+    subprocess.call(["ifconfig", interface, "down"])
+    
+    # Change the hardware (MAC) address of the specified interface
+    subprocess.call(["ifconfig", interface, "hw", "ether", macaddr])
+    
+    # Bring the interface back up (re-enable it)
+    subprocess.call(["ifconfig", interface, "up"])
+
+# Function to parse command-line arguments (interface and new MAC)
+def get_argument():
+    # Create an OptionParser object to handle command-line arguments
+    parser = optparse.OptionParser() 
+    
+    # Add an option for the network interface (-i or --interface)
+    parser.add_option("-i", "--interface", dest="interface", help="Interface to change the mac address")
+    
+    # Add an option for the new MAC address (-m or --mac)
+    parser.add_option("-m", "--mac", dest="new_mac", help="Add new mac address")
+    
+    # Parse the command-line arguments
+    (options, arguments) = parser.parse_args()
+
+    # Check if interface was provided, if not show an error
+    if not options.interface:
+        parser.error("[-] Specify an Interface. Use python macchanger --help for more details.")
+    
+    # Check if MAC address was provided, if not show an error
+    elif not options.new_mac:
+        parser.error("[-] Specify a Mac address. Use python macchanger --help for more details.")
+
+    # Return the options containing the interface and new MAC
+    return options
+
+# Function to retrieve the current MAC address of the given interface
+def getmac(interface):
+    # Run ifconfig command on the specified interface and capture the output
+    ifconfig_result = subprocess.check_output(["ifconfig", interface]).decode('utf-8')
+    
+    # Use a regular expression to search for a MAC address pattern in the output
+    current_mac = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result)
+
+    # If a MAC address is found, return it
+    if current_mac:
+        return current_mac.group(0)
+    else:
+        # Return None if no MAC address was found
+        return None
+
+# Get command-line arguments (interface and new MAC address)
+options = get_argument()
+
+# Call the macchanger function to change the MAC address using the provided interface and MAC
+macchanger(options.interface, options.new_mac)
+
+# Verify if the MAC address was successfully changed by fetching the current MAC
+final_mac = getmac(options.interface)
+
+# Check if the final MAC matches the new MAC provided by the user
+if final_mac == options.new_mac:
+    # If they match, print a success message
+    print("Mac Address successfully changed to %r" % (final_mac))
+else:
+    # If they don't match, print an error message
+    print("Error occurred. Fix it.")
