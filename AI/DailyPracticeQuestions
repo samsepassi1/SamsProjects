@@ -1,0 +1,85 @@
+import openai
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime
+import time
+
+# Configure OpenAI API key from environment variable
+openai.api_key = ""
+
+# Email settings - Use App Password instead of Gmail password
+EMAIL_USER = ""
+EMAIL_PASSWORD = ""  # App Password
+RECEIVER_EMAIL = ""  # Your recipient's email address
+
+# Function to generate CISA practice question
+def generate_cisa_question():
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Generate a challenging CISA practice question with multiple-choice answers."}
+        ],
+        max_tokens=150
+    )
+    question_text = response['choices'][0]['message']['content'].strip()
+    return question_text
+
+def generate_cisa_answer(question):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": f"Provide the correct answer to this question: {question}"}
+        ],
+        max_tokens=50
+    )
+    answer_text = response['choices'][0]['message']['content'].strip()
+    return answer_text
+
+# Email sending function with status check and timestamp
+def send_email(subject, content, to_email):
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_USER
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(content, 'plain'))
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        send_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Email sent successfully to {to_email} with subject '{subject}' at {send_time}")
+        return True  # Indicate success
+    except Exception as e:
+        print(f"Failed to send email to {to_email} with subject '{subject}'. Error: {e}")
+        return False  # Indicate failure
+
+# Function to send daily question and answer immediately
+def send_daily_cisa_question_and_answer():
+    question = generate_cisa_question()
+    today_date = datetime.now().strftime("%Y-%m-%d")
+    
+    # Send question email
+    question_sent = send_email(f"CISA Practice Question - {today_date}", question, RECEIVER_EMAIL)
+    if not question_sent:
+        print("Failed to send the question email. Skipping the answer email.")
+        return  # Exit if question email fails
+
+    # Delay before sending answer email (e.g., 10 seconds for testing)
+    time.sleep(10)
+
+    # Generate answer and send answer email
+    answer = generate_cisa_answer(question)
+    answer_sent = send_email(f"CISA Answer - {today_date}", answer, RECEIVER_EMAIL)
+    if not answer_sent:
+        print("Failed to send the answer email.")
+
+# Set up scheduler for daily task at 1:05 PM
+scheduler = BlockingScheduler()
+scheduler.add_job(send_daily_cisa_question_and_answer, 'cron', hour=13, minute=28)
+print("Scheduler started. The email will be sent daily at 1:28 PM.")
+scheduler.start()
