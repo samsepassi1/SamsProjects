@@ -1,7 +1,7 @@
 import openai
 
 # Initialize the OpenAI API
-openai.api_key = "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"
+openai.api_key = ""
 # Initialize the conversation list
 conversation = [
     {"role": "system", "content": "You are a helpful assistant."},
