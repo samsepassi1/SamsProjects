@@ -5,7 +5,7 @@ import openai
 import math
 
 # Set your OpenAI API key
-openai.api_key = "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"
+openai.api_key = ""
 
 CHUNK_DURATION_SEC = 300  # Split audio into 5-minute chunks
 
